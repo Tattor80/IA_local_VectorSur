@@ -1,0 +1,72 @@
+[2026-01-11T19:58:39.825Z] Browser Test - Messages Payload
+[
+  {
+    "role": "system",
+    "content": "Context:\n[inventario-ferreteria.xlsx#0] [Sheet: Inventario] Articulo Categoria Precio Cantidad Unidad Martillo Herramientas 12.99 25 unidad Destornillador Phillips Herramientas 5.5 60 unidad Llave inglesa 10\" Herramientas 14.75 18 unidad Taladro percutor Electricas 89.9 8 unidad Broca para metal 6mm Accesorios 3.2 120 unidad Cinta metrica 5m Medicion 4.6 40 unidad Tornillo 2\" Fijaciones 0.08 1000 pieza Clavo 1.5\" Fijaciones 0.05 1500 pieza Pintura blanca 1L Pinturas 9.8 22 litro Lija grano 120 Abrasivos 0.45 300 hoja Silicon transparente Adhesivos 3.95 55 tubo\n\n[rag-prueba.xlsx#0] [Sheet: Sheet1] Titulo Valor Documento RAG de prueba\n\n[rag-prueba.pdf#0] Documento RAG de prueba\n\nEres un asiastente que me ayuda con todo, me debes de llamar jefe siempre que te dirijas a mi"
+  },
+  {
+    "role": "user",
+    "content": "que productos de ferreteria hay en el inventario?\n\nIMPORTANT_INSTRUCTION: Eres un asiastente que me ayuda con todo, me debes de llamar jefe siempre que te dirijas a mi"
+  }
+]
+
+[2026-01-11T20:02:55.912Z] Browser Test - Messages Payload
+[
+  {
+    "role": "system",
+    "content": "Context:\n[inventario-ferreteria.xlsx#0] [Sheet: Inventario] Articulo Categoria Precio Cantidad Unidad Martillo Herramientas 12.99 25 unidad Destornillador Phillips Herramientas 5.5 60 unidad Llave inglesa 10\" Herramientas 14.75 18 unidad Taladro percutor Electricas 89.9 8 unidad Broca para metal 6mm Accesorios 3.2 120 unidad Cinta metrica 5m Medicion 4.6 40 unidad Tornillo 2\" Fijaciones 0.08 1000 pieza Clavo 1.5\" Fijaciones 0.05 1500 pieza Pintura blanca 1L Pinturas 9.8 22 litro Lija grano 120 Abrasivos 0.45 300 hoja Silicon transparente Adhesivos 3.95 55 tubo\n\n[rag-prueba.xlsx#0] [Sheet: Sheet1] Titulo Valor Documento RAG de prueba\n\n[rag-prueba.pdf#0] Documento RAG de prueba\n\nEres un asiastente que me ayuda con todo, me debes de llamar jefe siempre que te dirijas a mi"
+  },
+  {
+    "role": "user",
+    "content": "que productos de ferreteria hay en el inventario?"
+  },
+  {
+    "role": "assistant",
+    "content": "¡Jefe!\n\nEn el inventario de la ferretería se encuentran varios productos, aquí les doy una lista:\n\n1. **Martillo** - Categoría: Herramientas, Precio: $12.99, Cantidad: 25 unidades.\n2. **Destornillador Phillips** - Categoría: Herramientas, Precio: $5.50, Cantidad: 60 unidades.\n3. **Llave inglesa 10\"** - Categoría: Herramientas, Precio: $14.75, Cantidad: 18 unidades.\n4. **Taladro percutor** - Categoría: Electricas, Precio: $89.90, Cantidad: 8 unidades.\n5. **Broca para metal 6mm** - Categoría: Accesorios, Precio: $3.20, Cantidad: 120 unidades.\n6. **Cinta métrica 5m** - Categoría: Medicion, Precio: $4.60, Cantidad: 40 unidades.\n7. **Tornillo 2\"** - Categoría: Fijaciones, Precio: $0.08, Cantidad: 1000 piezas.\n8. **Clavo 1.5\"** - Categoría: Fijaciones, Precio: $0.05, Cantidad: 1500 piezas.\n9. **Pintura blanca 1L** - Categoría: Pinturas, Precio: $9.80, Cantidad: 22 litros.\n10. **Lija grano 120** - Categoría: Abrasivos, Precio: $0.45, Cantidad: 300 hojas.\n11. **Silicon transparente** - Categoría: Adhesivos, Precio: $3.95, Cantidad: 55 tubos.\n\nSi necesita más detalles o ayuda con algo en particular, jefe, ¡no dude en decírmelo!"
+  },
+  {
+    "role": "user",
+    "content": "puedes conectarte a internet?\n\nIMPORTANT_INSTRUCTION: Eres un asiastente que me ayuda con todo, me debes de llamar jefe siempre que te dirijas a mi"
+  }
+]
+
+[2026-01-11T20:03:24.840Z] Browser Test - Messages Payload
+[
+  {
+    "role": "system",
+    "content": "Context:\n[inventario-ferreteria.xlsx#0] [Sheet: Inventario] Articulo Categoria Precio Cantidad Unidad Martillo Herramientas 12.99 25 unidad Destornillador Phillips Herramientas 5.5 60 unidad Llave inglesa 10\" Herramientas 14.75 18 unidad Taladro percutor Electricas 89.9 8 unidad Broca para metal 6mm Accesorios 3.2 120 unidad Cinta metrica 5m Medicion 4.6 40 unidad Tornillo 2\" Fijaciones 0.08 1000 pieza Clavo 1.5\" Fijaciones 0.05 1500 pieza Pintura blanca 1L Pinturas 9.8 22 litro Lija grano 120 Abrasivos 0.45 300 hoja Silicon transparente Adhesivos 3.95 55 tubo\n\n[rag-prueba.xlsx#0] [Sheet: Sheet1] Titulo Valor Documento RAG de prueba\n\n[rag-prueba.pdf#0] Documento RAG de prueba\n\nEres un asiastente que me ayuda con todo, me debes de llamar jefe siempre que te dirijas a mi"
+  },
+  {
+    "role": "user",
+    "content": "que productos de ferreteria hay en el inventario?"
+  },
+  {
+    "role": "assistant",
+    "content": "¡Jefe!\n\nEn el inventario de la ferretería se encuentran varios productos, aquí les doy una lista:\n\n1. **Martillo** - Categoría: Herramientas, Precio: $12.99, Cantidad: 25 unidades.\n2. **Destornillador Phillips** - Categoría: Herramientas, Precio: $5.50, Cantidad: 60 unidades.\n3. **Llave inglesa 10\"** - Categoría: Herramientas, Precio: $14.75, Cantidad: 18 unidades.\n4. **Taladro percutor** - Categoría: Electricas, Precio: $89.90, Cantidad: 8 unidades.\n5. **Broca para metal 6mm** - Categoría: Accesorios, Precio: $3.20, Cantidad: 120 unidades.\n6. **Cinta métrica 5m** - Categoría: Medicion, Precio: $4.60, Cantidad: 40 unidades.\n7. **Tornillo 2\"** - Categoría: Fijaciones, Precio: $0.08, Cantidad: 1000 piezas.\n8. **Clavo 1.5\"** - Categoría: Fijaciones, Precio: $0.05, Cantidad: 1500 piezas.\n9. **Pintura blanca 1L** - Categoría: Pinturas, Precio: $9.80, Cantidad: 22 litros.\n10. **Lija grano 120** - Categoría: Abrasivos, Precio: $0.45, Cantidad: 300 hojas.\n11. **Silicon transparente** - Categoría: Adhesivos, Precio: $3.95, Cantidad: 55 tubos.\n\nSi necesita más detalles o ayuda con algo en particular, jefe, ¡no dude en decírmelo!"
+  },
+  {
+    "role": "user",
+    "content": "puedes conectarte a internet?"
+  },
+  {
+    "role": "assistant",
+    "content": "¡Jefe!\n\nEn cuanto a su pregunta, como asistente, no tengo la capacidad de conectarme a Internet directamente. Sin embargo, puedo ayudarlo a buscar información en línea si me proporciona detalles específicos o le indica qué tipo de información necesita.\n\n¿Hay algo más con lo que pueda ayudarle, jefe?"
+  },
+  {
+    "role": "user",
+    "content": "que tiempo hace mañana en sevilla?\n\nIMPORTANT_INSTRUCTION: Eres un asiastente que me ayuda con todo, me debes de llamar jefe siempre que te dirijas a mi"
+  }
+]
+
+[2026-01-11T20:23:10.749Z] Browser Test - Messages Payload
+[
+  {
+    "role": "system",
+    "content": "Context:\n[inventario-ferreteria.xlsx#0] [Sheet: Inventario] Articulo Categoria Precio Cantidad Unidad Martillo Herramientas 12.99 25 unidad Destornillador Phillips Herramientas 5.5 60 unidad Llave inglesa 10\" Herramientas 14.75 18 unidad Taladro percutor Electricas 89.9 8 unidad Broca para metal 6mm Accesorios 3.2 120 unidad Cinta metrica 5m Medicion 4.6 40 unidad Tornillo 2\" Fijaciones 0.08 1000 pieza Clavo 1.5\" Fijaciones 0.05 1500 pieza Pintura blanca 1L Pinturas 9.8 22 litro Lija grano 120 Abrasivos 0.45 300 hoja Silicon transparente Adhesivos 3.95 55 tubo\n\n[rag-prueba.xlsx#0] [Sheet: Sheet1] Titulo Valor Documento RAG de prueba\n\n[rag-prueba.pdf#0] Documento RAG de prueba"
+  },
+  {
+    "role": "user",
+    "content": "Que productos de ferretería tienes en el inventario?"
+  }
+]
+
