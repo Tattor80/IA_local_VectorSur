@@ -1,117 +1,115 @@
-# Chatbot Ollama by Vector Sur
+# Vector Sur AI (Chatbot Ollama)
 
-## About
+## Acerca de
 
-Chatbot Ollama is an enterprise-ready AI chat interface powered by Ollama, developed by **Vector Sur**.
+**Vector Sur AI** es una interfaz de chat preparada para empresas impulsada por Ollama, desarrollada por **Vector Sur**.
 
-Features include RAG (Retrieval-Augmented Generation), document upload, customizable system prompts, and multi-model support.
+Las características incluyen RAG (Generación Aumentada por Recuperación), carga de documentos, prompts del sistema personalizables y soporte para múltiples modelos.
 
-![Chatbot Ollama – Dark](./public/screenshots/screenshot-2025-09-dark.png)
+![Vector Sur AI – Oscuro](./public/screenshots/screenshot-2025-09-dark.png)
 
-![Chatbot Ollama – Light](./public/screenshots/screenshot-2025-09-light.png)
+![Vector Sur AI – Claro](./public/screenshots/screenshot-2025-09-light.png)
 
-## Highlights (new)
+## Destacados (Novedades)
 
-- Blue theme polished for light and dark modes with consistent sidebars, headers, and overlays.
-- Document upload (PDF, TXT, MD):
-  - PDFs parsed server‑side for reliability; text/markdown read client‑side.
-  - The full (truncated) content is attached invisibly to the model prompt — the UI stays clean.
-  - 50 MB size cap, 100 page cap (PDF), 50k characters per attachment.
-- Image upload: attach images and send them to vision‑capable models (base64). Non‑vision models simply ignore images.
-- Code blocks: copy button, language label, optional line numbers, line‑wrap toggle, and “download as file”.
-- Streaming & control: Stop Generation button, auto‑scroll toggle (pause/resume when you scroll up).
-- Keyboard shortcuts:
-  - Enter to send, Shift+Enter for newline
-  - Esc to blur input
-  - Ctrl/Cmd+L clears the composer
-  - Arrow Up recalls the last user message
-- Error handling: a consistent toast shows details, Copy details, and Retry.
-- Conversation tools: Copy messages button copies the whole visible conversation (with role labels and any attached content).
-- Sidebar UX: search inputs are theme‑aware, prompts list matches chat list styling, improved hover/selection.
+- **Tema Azul Intuitivo**: Optimizado para modos claro y oscuro con barras laterales, encabezados y superposiciones consistentes.
+- **Carga de Documentos (PDF, TXT, MD)**:
+  - Los PDF se procesan en el servidor para mayor fiabilidad; texto/markdown se leen en el cliente.
+  - El contenido completo (truncado si es necesario) se adjunta invisiblemente al prompt del modelo — la interfaz se mantiene limpia.
+  - Límite de 50 MB, 100 páginas (PDF), 50k caracteres por adjunto.
+- **Carga de Imágenes**: Adjunta imágenes y envíalas a modelos con capacidad de visión (base64). Los modelos sin visión simplemente ignoran las imágenes.
+- **Bloques de Código**: Botón de copiar, etiqueta de lenguaje, números de línea opcionales, alternar ajuste de línea y "descargar como archivo".
+- **Streaming y Control**: Botón "Detener Generación", alternancia de auto-scroll (pausa/reanuda al desplazarse hacia arriba).
+- **Atajos de Teclado**:
+  - Enter para enviar, Shift+Enter para salto de línea.
+  - Esc para desenfocar el input.
+  - Ctrl/Cmd+L limpia el editor.
+  - Flecha Arriba recupera el último mensaje del usuario.
+- **Manejo de Errores**: Notificaciones (toast) consistentes con detalles, opción de copiar detalles y reintentar.
+- **Herramientas de Conversación**: Botón para copiar toda la conversación visible (con etiquetas de roles y contenido adjunto).
+- **UX de Barra Lateral**: Inputs de búsqueda adaptables al tema, lista de prompts coincide con el estilo de lista de chats, mejor selección/hover.
 
-## Updates
+## Próximos Pasos (Roadmap)
 
-Chatbot Ollama will be updated over time.
+Vector Sur AI se actualizará con el tiempo.
 
-### Next up
-
-- [ ] Model management (pull/delete)
-- [ ] Model info/details dialog
+- [ ] Gestión de modelos (pull/delete)
+- [ ] Diálogo de información/detalles del modelo
 
 ## Docker
 
-Build locally:
+Construir localmente:
 
 ```shell
 docker build -t chatbot-ollama .
 docker run -p 3000:3000 chatbot-ollama
 ```
 
-Pull from ghcr:
+Descargar de ghcr:
 
 ```bash
 docker run -p 3000:3000 ghcr.io/ivanfioravanti/chatbot-ollama:main
 ```
 
-## Running Locally
+## Ejecución Local
 
-### 1. Clone Repo
-
-```bash
-git clone https://github.com/ivanfioravanti/chatbot-ollama.git
-```
-
-### 2. Move to folder
+### 1. Clonar Repositorio
 
 ```bash
-cd chatbot-ollama
+git clone https://github.com/Tattor80/IA_local_VectorSur.git
 ```
 
-### 3. Install Dependencies
+### 2. Entrar en la carpeta
+
+```bash
+cd IA_local_VectorSur
+```
+
+### 3. Instalar Dependencias
 
 ```bash
 npm ci
 ```
 
-### 4. Run Ollama server
+### 4. Ejecutar servidor Ollama
 
-Either via the cli:
+Ya sea vía CLI:
 
 ```bash
 ollama serve
 ```
 
-or via the [desktop client](https://ollama.ai/download)
+o vía el [cliente de escritorio](https://ollama.ai/download).
 
-### 5. Run App
+### 5. Iniciar la App
 
 ```bash
 npm run dev
 ```
 
-### 6. Use It
+### 6. Usar
 
-You should be able to start chatting.
+Deberías poder empezar a chatear en `http://localhost:3000`.
 
-### Tips
+### Consejos
 
-- Attach documents via the paper icon in the composer - the content is included for the model invisibly so the chat stays uncluttered.
-- Attach an image with the camera icon - vision models will "see" it; others will ignore it.
-- Use the clipboard icon in the sticky header to copy the current conversation.
+- Adjunta documentos con el icono de clip — el contenido se incluye invisiblemente para el modelo.
+- Adjunta una imagen con el icono de cámara — los modelos de visión la "verán"; otros la ignorarán.
+- Usa el icono de portapapeles en el encabezado fijo para copiar la conversación actual.
 
-## Persistent RAG (local)
+## RAG Persistente (Local)
 
-This project can inject retrieved context into chats using a local vector DB (Qdrant) + Ollama embeddings. Folder ingestion supports PDF and Excel files.
+Este proyecto puede inyectar contexto recuperado en los chats usando una base de datos vectorial local (Qdrant) + embeddings de Ollama. La ingesta de carpetas soporta archivos PDF y Excel.
 
-### 1. Start Qdrant (local)
+### 1. Iniciar Qdrant (local)
 
 ```bash
 docker run -p 6333:6333 qdrant/qdrant
 ```
 
-### 2. Configure env vars
+### 2. Configurar variables de entorno
 
-Set in `.env.local`:
+En `.env.local`:
 
 ```bash
 RAG_ENABLED="true"
@@ -120,55 +118,55 @@ RAG_COLLECTION="chatbot_ollama"
 RAG_EMBED_MODEL="nomic-embed-text"
 ```
 
-### 3. Ingest documents
+### 3. Ingestar documentos
 
-Example with PowerShell:
+Ejemplo con PowerShell:
 
 ```powershell
 $body = @{
   documents = @(
-    @{ text = "Your document text goes here"; metadata = @{ source = "notes.txt" } }
+    @{ text = "Texto de tu documento aqui"; metadata = @{ source = "notas.txt" } }
   )
 } | ConvertTo-Json -Depth 6
 Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/rag/ingest -ContentType "application/json" -Body $body
 ```
 
-### 3b. Ingest a local folder (UI)
+### 3b. Ingestar carpeta local (UI)
 
-Set in `.env.local`:
+Configurar en `.env.local`:
 
 ```bash
-RAG_DEFAULT_FOLDER="C:\\path\\to\\docs"
-NEXT_PUBLIC_RAG_DEFAULT_FOLDER="C:\\path\\to\\docs"
+RAG_DEFAULT_FOLDER="C:\\ruta\\a\\docs"
+NEXT_PUBLIC_RAG_DEFAULT_FOLDER="C:\\ruta\\a\\docs"
 ```
 
-Then visit:
+Luego visita:
 
 ```
 http://localhost:3000/rag
 ```
 
-Use the UI to select file types and optionally clear the collection before re-ingesting.
+Usa la interfaz para seleccionar tipos de archivos y opcionalmente limpiar la colección antes de re-ingestar.
 
-### 4. (Optional) Test retrieval
+### 4. (Opcional) Probar recuperación
 
 ```powershell
-$body = @{ query = "What is this document about?" } | ConvertTo-Json
+$body = @{ query = "¿De que trata este documento?" } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/rag/query -ContentType "application/json" -Body $body
 ```
 
-Once enabled, `/api/chat` will automatically retrieve relevant chunks and prepend them to the prompt.
+Una vez habilitado, `/api/chat` recuperará automáticamente fragmentos relevantes y los antepondrá al prompt.
 
-## Configuration
+## Configuración
 
-When deploying the application, the following environment variables can be set:
+Al desplegar la aplicación, se pueden configurar las siguientes variables de entorno:
 
-| Environment Variable              | Default value                  | Description                                                                                                                               |
+| Variable de Entorno               | Valor por defecto              | Descripción                                                                                                                               |
 | --------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| DEFAULT_MODEL                     | `llama3:latest`                 | The default model to use on new conversations                                                                                             |
-| NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT | [see here](utils/app/const.ts) | The default system prompt to use on new conversations                                                                                     |
-| NEXT_PUBLIC_DEFAULT_TEMPERATURE   | 1                              | The default temperature to use on new conversations                                                                                       |
+| DEFAULT_MODEL                     | `llama3:latest`                 | El modelo por defecto para nuevas conversaciones                                                                                          |
+| NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT | [ver aquí](utils/app/const.ts) | El prompt del sistema por defecto para nuevas conversaciones                                                                              |
+| NEXT_PUBLIC_DEFAULT_TEMPERATURE   | 1                              | La temperatura por defecto para nuevas conversaciones                                                                                     |
 
-## Contact
+## Contacto
 
-If you have any questions, feel free to reach out to me on [X](https://x.com/ivanfioravanti).
+Si tienes preguntas, no dudes en contactarnos.
