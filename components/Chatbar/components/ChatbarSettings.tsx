@@ -1,4 +1,4 @@
-import { IconFileExport, IconFileImport, IconSettings } from '@tabler/icons-react';
+import { IconChartBar, IconFileExport, IconFileImport, IconSettings } from '@tabler/icons-react';
 import { useContext, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -53,6 +53,14 @@ export const ChatbarSettings = () => {
         icon={<IconFileImport size={18} />}
         onClick={() => {
           window.location.href = '/rag';
+        }}
+      />
+
+      <SidebarButton
+        text="📊 Dashboard"
+        icon={<IconChartBar size={18} />}
+        onClick={() => {
+          window.location.href = '/analytics';
         }}
       />
 

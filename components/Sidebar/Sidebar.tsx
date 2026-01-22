@@ -57,25 +57,25 @@ const Sidebar = <T,>({
   return isOpen ? (
     <div>
       <div
-        className={`fixed top-0 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-[#0e1728] dark:to-[#0e1728] p-2 text-[14px] transition-all sm:relative sm:top-0 ${side === 'left' ? 'border-r' : 'border-l'} border-blue-100 dark:border-[#0b1220]`}
+        className={`fixed top-0 ${side}-0 z-40 flex h-full w-[260px] flex-none flex-col space-y-2 bg-gray-50 dark:bg-gray-900/95 backdrop-blur-xl p-2 text-[14px] transition-all sm:relative sm:top-0 ${side === 'left' ? 'border-r' : 'border-l'} border-gray-200 dark:border-white/10`}
       >
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <button
-            className="text-sidebar flex w-[190px] flex-shrink-0 cursor-pointer select-none items-center gap-3 rounded-md border p-3 transition-colors duration-200 border-blue-200 text-gray-700 hover:bg-blue-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+            className="flex-grow text-sidebar flex items-center justify-center gap-3 rounded-lg border border-gray-200 dark:border-white/10 p-3 transition-all duration-200 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-sm"
             onClick={() => {
               handleCreateItem();
               handleSearchTerm('');
             }}
           >
-            <IconPlus size={16} />
-            {addItemButtonTitle}
+            <IconPlus size={18} />
+            <span className="font-medium">{addItemButtonTitle}</span>
           </button>
 
           <button
-            className="ml-2 flex flex-shrink-0 cursor-pointer items-center gap-3 rounded-md border p-3 text-sm transition-colors duration-200 border-blue-200 text-gray-700 hover:bg-blue-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+            className="flex-none flex items-center justify-center w-[46px] rounded-lg border border-gray-200 dark:border-white/10 p-3 text-sm transition-all duration-200 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-sm"
             onClick={handleCreateFolder}
           >
-            <IconFolderPlus size={16} />
+            <IconFolderPlus size={18} />
           </button>
         </div>
         <Search

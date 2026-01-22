@@ -1,44 +1,44 @@
-# Contributing Guidelines
+# Guías de Contribución
 
-**Welcome to Chatbot Ollama!**
+**¡Bienvenido a Vector Sur AI!**
 
-We appreciate your interest in contributing to our project.
+Agradecemos tu interés en contribuir a nuestro proyecto.
 
-Before you get started, please read our guidelines for contributing.
+Antes de comenzar, por favor lee nuestras guías para contribuir.
 
-## Types of Contributions
+## Tipos de Contribuciones
 
-We welcome the following types of contributions:
+Agradecemos los siguientes tipos de contribuciones:
 
-- Bug fixes
-- New features
-- Documentation improvements
-- Code optimizations
-- Translations
-- Tests
+- Corrección de errores (Bug fixes)
+- Nuevas funcionalidades
+- Mejoras en la documentación
+- Optimizaciones de código
+- Traducciones
+- Pruebas (Tests)
 
-## Getting Started
+## Para Empezar
 
-To get started, fork the project on GitHub and clone it locally on your machine. Then, create a new branch to work on your changes.
+Para empezar, haz un "fork" del proyecto en GitHub y clónalo localmente en tu máquina. Luego, crea una nueva rama (branch) para trabajar en tus cambios.
 
 ```bash
-git clone https://github.com/ivanfioravanti/chatbot-ollama.git
-cd chatbot-ollama
-git checkout -b my-branch-name
+git clone https://github.com/Tattor80/IA_local_VectorSur.git
+cd IA_local_VectorSur
+git checkout -b mi-rama-de-cambios
 ```
 
-Before submitting your pull request, please make sure your changes pass our automated tests and adhere to our code style guidelines.
+Antes de enviar tu "pull request", asegúrate de que tus cambios pasen nuestras pruebas automatizadas y cumplan con nuestras guías de estilo de código.
 
-## Pull Request Process
+## Proceso de Pull Request
 
-1. Fork the project on GitHub.
-2. Clone your forked repository locally on your machine.
-3. Create a new branch from the main branch.
-4. Make your changes on the new branch.
-5. Ensure that your changes adhere to our code style guidelines and pass our automated tests.
-6. Commit your changes and push them to your forked repository.
-7. Submit a pull request to the main branch of the main repository.
+1. Haz un fork del proyecto en GitHub.
+2. Clona tu repositorio forkeado localmente en tu máquina.
+3. Crea una nueva rama desde la rama `main`.
+4. Realiza tus cambios en la nueva rama.
+5. Asegúrate de que tus cambios cumplan con nuestras guías de estilo y pasen las pruebas.
+6. Haz commit de tus cambios y súbelos (push) a tu repositorio forkeado.
+7. Envía un "pull request" a la rama `main` del repositorio principal.
 
-## Contact
+## Contacto
 
-If you have any questions or need help getting started, feel free to reach out to me on [X](https://x.com/ivanfioravanti).
+Si tienes preguntas o necesitas ayuda para empezar, no dudes en contactarnos.

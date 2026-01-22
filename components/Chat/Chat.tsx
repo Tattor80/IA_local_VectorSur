@@ -1,4 +1,4 @@
-import { IconClearAll, IconClipboard, IconPlayerPause, IconPlayerPlay, IconSettings } from '@tabler/icons-react';
+import { IconClearAll, IconClipboard, IconFileExport, IconPlayerPause, IconPlayerPlay, IconSettings } from '@tabler/icons-react';
 import {
   MutableRefObject,
   memo,
@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'next-i18next';
 
 import { getEndpoint } from '@/utils/app/api';
+import { trackQuery, trackDocumentCitation } from '@/utils/app/analyticsService';
 import { SYSTEM_PROMPT_UNRELIABLE_MODELS } from '@/utils/app/const';
 import {
   saveConversation,
@@ -60,6 +61,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
+  const [department, setDepartment] = useState<string>('General');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -113,9 +115,9 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       detail?: string,
       onRetry?: () => void,
     ) => {
-      toast.custom((t) => (
+      toast.custom((toastEntry: any) => (
         <div
-          className={`max-w-[540px] w-[92vw] md:w-[540px] rounded-lg border border-red-300 bg-white text-red-700 shadow-lg dark:border-red-800/40 dark:bg-[#2a2b32] dark:text-red-300 ${t.visible ? 'animate-enter' : 'animate-leave'
+          className={`max-w-[540px] w-[92vw] md:w-[540px] rounded-lg border border-red-300 bg-white text-red-700 shadow-lg dark:border-red-800/40 dark:bg-[#2a2b32] dark:text-red-300 ${toastEntry.visible ? 'animate-enter' : 'animate-leave'
             }`}
         >
           <div className="px-4 py-3">
@@ -130,7 +132,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                 <button
                   className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700 transition-colors"
                   onClick={() => {
-                    toast.dismiss(t.id);
+                    toast.dismiss(toastEntry.id);
                     onRetry();
                   }}
                 >
@@ -139,7 +141,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
               )}
               <button
                 className="rounded-md border border-neutral-300 px-3 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors"
-                onClick={() => toast.dismiss(t.id)}
+                onClick={() => toast.dismiss(toastEntry.id)}
               >
                 Dismiss
               </button>
@@ -193,6 +195,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           messages: updatedConversation.messages,
           images: imagesBase64 && imagesBase64.length ? imagesBase64 : undefined,
           ragQuery: message.content,
+          department: department, // Pass selected department
           options: { temperature: updatedConversation.temperature },
         };
         const endpoint = getEndpoint();
@@ -309,6 +312,26 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           homeDispatch({ field: 'conversations', value: updatedConversations });
           saveConversations(updatedConversations);
           homeDispatch({ field: 'messageIsStreaming', value: false });
+
+          // Track analytics
+          const responseEndTime = Date.now();
+          const responseTimeMs = responseEndTime - (responseEndTime - 2000); // Approximate, will refine
+          // Count RAG sources from the response text
+          let ragSourcesCount = 0;
+          if (text.includes(':::rag-sources:::')) {
+            try {
+              const sourcesJson = text.split(':::rag-sources:::')[1]?.trim();
+              if (sourcesJson) {
+                const sources = JSON.parse(sourcesJson);
+                ragSourcesCount = sources.length;
+                // Track individual document citations
+                for (const src of sources) {
+                  if (src.source) trackDocumentCitation(src.source);
+                }
+              }
+            } catch { /* ignore parse errors */ }
+          }
+          trackQuery(department, ragSourcesCount, responseTimeMs);
         } catch (err) {
           homeDispatch({ field: 'loading', value: false });
           homeDispatch({ field: 'messageIsStreaming', value: false });
@@ -331,6 +354,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
       stopConversationRef,
       homeDispatch,
       showErrorToast,
+      department,
     ],
   );
 
@@ -541,41 +565,100 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
             </>
           ) : (
             <>
-              <div className="sticky top-0 z-10 flex justify-center items-center gap-3 bg-white/80 dark:bg-[#0e1728]/80 backdrop-blur-lg border-b border-gray-200 dark:border-[#1b2a4a] py-2 px-3 text-sm text-gray-600 dark:text-gray-300 shadow-sm">
+              <div className="sticky top-0 z-10 flex justify-center items-center gap-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 py-2 px-3 text-sm text-gray-600 dark:text-gray-300 shadow-sm transition-all">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{t('Model')}:</span>
-                  <span className="text-primary-600 dark:text-primary-400 font-semibold">
+                  <span className="text-primary-600 dark:text-primary-400 font-semibold truncate max-w-[150px]">
                     {selectedConversation?.model?.name || t('Unknown model')}
                   </span>
                 </div>
+
+
+
                 <div className="w-1 h-1 bg-gray-400 dark:bg-gray-600 rounded-full"></div>
+
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{t('Temp')}:</span>
-                  <span className="text-gray-700 dark:text-gray-300 font-semibold">
-                    {selectedConversation?.temperature ?? '-'}
-                  </span>
+                  <span className="font-medium whitespace-nowrap">Dept:</span>
+                  <div className="relative">
+                    <select
+                      className="appearance-none rounded-md bg-gray-100 dark:bg-gray-800 py-1 pl-2 pr-6 text-sm font-semibold text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer border border-transparent hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                    >
+                      <option value="General">General</option>
+                      <option value="RRHH">RRHH</option>
+                      <option value="Ventas">Ventas</option>
+                      <option value="Soporte">Soporte</option>
+                      <option value="Finanzas">Finanzas</option>
+                      <option value="Legal">Legal</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-500">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 ml-4">
+
+                <div className="flex items-center gap-1 ml-auto">
                   <button
                     className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-all duration-200 hover:scale-105"
                     onClick={handleSettings}
-                    title={t('Settings')}
+                    title={(t('Settings') as string) || 'Settings'}
                   >
-                    <IconSettings size={16} />
+                    <IconSettings size={18} stroke={1.5} />
                   </button>
                   <button
                     className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-all duration-200 hover:scale-105"
                     onClick={copyConversation}
                     title={t('Copy messages') || 'Copy messages'}
                   >
-                    <IconClipboard size={16} />
+                    <IconClipboard size={18} stroke={1.5} />
                   </button>
                   <button
-                    className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-all duration-200 hover:scale-105"
-                    onClick={onClearAll}
-                    title={t('Clear all')}
+                    className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 hover:scale-105"
+                    onClick={async () => {
+                      if (!selectedConversation?.messages?.length) {
+                        toast.error('No hay mensajes para exportar');
+                        return;
+                      }
+                      try {
+                        toast.loading('Generando PDF...');
+                        const res = await fetch('/api/export/pdf', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            title: selectedConversation.name,
+                            messages: selectedConversation.messages,
+                            model: selectedConversation.model?.name,
+                            department,
+                          }),
+                        });
+                        toast.dismiss();
+                        if (!res.ok) throw new Error('PDF generation failed');
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `vectorsur_${Date.now()}.pdf`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success('📄 PDF descargado');
+                      } catch (err) {
+                        toast.dismiss();
+                        toast.error('Error al generar PDF');
+                      }
+                    }}
+                    title="Exportar a PDF"
                   >
-                    <IconClearAll size={16} />
+                    <IconFileExport size={18} stroke={1.5} />
+                  </button>
+                  <button
+                    className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-500 dark:hover:text-red-400 transition-all duration-200 hover:scale-105"
+                    onClick={onClearAll}
+                    title={(t('Clear all') as string) || 'Clear all'}
+                  >
+                    <IconClearAll size={18} stroke={1.5} />
                   </button>
                   <button
                     className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200 transition-all duration-200 hover:scale-105"
@@ -583,9 +666,9 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
                     title={autoScrollLocked ? (t('Enable auto-scroll') || 'Enable auto-scroll') : (t('Disable auto-scroll') || 'Disable auto-scroll')}
                   >
                     {autoScrollLocked ? (
-                      <IconPlayerPlay size={16} />
+                      <IconPlayerPlay size={18} stroke={1.5} />
                     ) : (
-                      <IconPlayerPause size={16} />
+                      <IconPlayerPause size={18} stroke={1.5} />
                     )}
                   </button>
                 </div>
@@ -593,8 +676,40 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
               {showSettings && (
                 <div className="flex flex-col space-y-6 md:mx-auto md:max-w-xl md:gap-6 md:py-4 md:pt-8 lg:max-w-2xl lg:px-0 xl:max-w-3xl animate-slide-down">
                   <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Model Settings</h3>
-                    <ModelSelect />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Conversation Settings</h3>
+
+                    <div className="space-y-6">
+                      <ModelSelect />
+
+                      {selectedConversation && (
+                        <>
+                          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <SystemPrompt
+                              conversation={selectedConversation}
+                              prompts={prompts}
+                              onChangePrompt={(prompt) =>
+                                handleUpdateConversation(selectedConversation, {
+                                  key: 'prompt',
+                                  value: prompt,
+                                })
+                              }
+                            />
+                          </div>
+
+                          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <TemperatureSlider
+                              label={t('Temperature')}
+                              onChangeTemperature={(temperature) =>
+                                handleUpdateConversation(selectedConversation, {
+                                  key: 'temperature',
+                                  value: temperature,
+                                })
+                              }
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

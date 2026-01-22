@@ -1,8 +1,106 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { IconArrowLeft, IconTrash, IconFile, IconFolder } from '@tabler/icons-react';
 
 import { GetServerSideProps } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+
+const DocumentList = () => {
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchDocuments = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/rag/status?details=true');
+      const data = await res.json();
+      if (data.ok && data.documents) {
+        setDocuments(data.documents);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (type: 'file' | 'category', value: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar ${type === 'file' ? 'este archivo' : 'esta categoría'}?`)) return;
+
+    try {
+      const res = await fetch('/api/rag/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, value }),
+      });
+      if (res.ok) {
+        fetchDocuments(); // Refresh list
+      }
+    } catch (e) {
+      alert('Error al eliminar');
+    }
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  if (loading && documents.length === 0) return <div className="text-sm text-gray-500">Cargando lista de documentos...</div>;
+  if (documents.length === 0) return <div className="text-sm text-gray-500">No hay documentos ingestados.</div>;
+
+  // Group by category
+  const grouped: Record<string, any[]> = {};
+  documents.forEach(doc => {
+    const cat = doc.category || 'General';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(doc);
+  });
+
+  return (
+    <div className="space-y-4">
+      {Object.entries(grouped).map(([category, docs]) => (
+        <div key={category} className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#111b2d] overflow-hidden">
+          <div className="flex items-center justify-between bg-gray-50 dark:bg-[#1b2a4a] px-3 py-2">
+            <div className="flex items-center gap-2 font-medium text-gray-700 dark:text-gray-200 text-sm">
+              <IconFolder size={16} />
+              {category} <span className="text-xs text-gray-500">({docs.length})</span>
+            </div>
+            <button
+              onClick={() => handleDelete('category', category)}
+              className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="Eliminar categoría completa"
+            >
+              <IconTrash size={14} />
+            </button>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            {docs.map((doc: any) => (
+              <div key={doc.source} className="flex items-center justify-between px-3 py-2 text-xs">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 truncate max-w-[80%]">
+                  <IconFile size={14} className="flex-shrink-0" />
+                  <span className="truncate" title={doc.source}>{doc.title}</span>
+                </div>
+                <button
+                  onClick={() => handleDelete('file', doc.source)}
+                  className="text-gray-400 hover:text-red-500 p-1 transition-colors"
+                  title="Eliminar archivo"
+                >
+                  <IconTrash size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div className="flex justify-center mt-2">
+        <button onClick={fetchDocuments} className="text-xs text-primary-500 hover:underline">
+          Actualizar lista
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const defaultFolder =
   process.env.NEXT_PUBLIC_RAG_DEFAULT_FOLDER || '';
@@ -19,11 +117,22 @@ const RagIngestPage = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedFolderLabel, setSelectedFolderLabel] = useState<string>('');
+  const [department, setDepartment] = useState<string>('General');
   const [progress, setProgress] = useState<number>(0);
   const [totalFiles, setTotalFiles] = useState<number>(0);
   const [currentFile, setCurrentFile] = useState<string>('');
   const folderInputRef = useRef<HTMLInputElement>(null);
   const filesInputRef = useRef<HTMLInputElement>(null);
+
+  const detectDepartmentFromFolder = (folderName: string): string => {
+    const lower = folderName.toLowerCase();
+    if (lower.includes('rrhh') || lower.includes('recursos humanos') || lower.includes('hr')) return 'RRHH';
+    if (lower.includes('ventas') || lower.includes('sales') || lower.includes('comercial')) return 'Ventas';
+    if (lower.includes('soporte') || lower.includes('support') || lower.includes('helpdesk') || lower.includes('tecnico')) return 'Soporte';
+    if (lower.includes('finanzas') || lower.includes('finance') || lower.includes('contabilidad') || lower.includes('facturacion')) return 'Finanzas';
+    if (lower.includes('legal') || lower.includes('juridico') || lower.includes('contratos')) return 'Legal';
+    return 'General';
+  };
 
   useEffect(() => {
     if (folderInputRef.current) {
@@ -77,6 +186,12 @@ const RagIngestPage = () => {
     const label = relative ? relative.split('/')[0] : files[0].name;
     setSelectedFiles(files);
     setSelectedFolderLabel(label);
+
+    // Auto-detect department
+    const detected = detectDepartmentFromFolder(label);
+    if (detected !== 'General') {
+      setDepartment(detected);
+    }
   };
 
   const handleFilesSelection = (event: ChangeEvent<HTMLInputElement>) => {
@@ -143,6 +258,7 @@ const RagIngestPage = () => {
           body: JSON.stringify({
             reset: resetCollection,
             files: filesData,
+            department,
           }),
         });
 
@@ -170,6 +286,7 @@ const RagIngestPage = () => {
             folderPath,
             reset: resetCollection,
             extensions,
+            department,
           }),
         });
 
@@ -199,7 +316,14 @@ const RagIngestPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 dark:from-[#0e1728] dark:to-[#0b1220] px-4 py-8">
       <div className="mx-auto max-w-2xl space-y-6">
-        <div className="text-center">
+        <div className="relative text-center">
+          <Link
+            href="/"
+            className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full p-2 text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
+            title="Volver al inicio"
+          >
+            <IconArrowLeft size={24} />
+          </Link>
           <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary-600 to-accent-purple bg-clip-text text-transparent mb-2">
             Vector Sur AI
           </h1>
@@ -221,6 +345,17 @@ const RagIngestPage = () => {
               className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none dark:border-[#1b2a4a] dark:bg-[#0e1728] dark:text-gray-100"
               value={folderPath}
               onChange={(e) => setFolderPath(e.target.value)}
+              onBlur={(e) => {
+                const val = e.target.value;
+                if (!val) return;
+                const normalized = val.replace(/\\/g, '/');
+                const parts = normalized.split('/').filter(Boolean);
+                const lastPart = parts[parts.length - 1];
+                if (lastPart) {
+                  const detected = detectDepartmentFromFolder(lastPart);
+                  if (detected !== 'General') setDepartment(detected);
+                }
+              }}
               placeholder="C:\\path\\to\\docs"
             />
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
@@ -306,6 +441,24 @@ const RagIngestPage = () => {
             </label>
           </div>
 
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Department / Category
+            </label>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none dark:border-[#1b2a4a] dark:bg-[#0e1728] dark:text-gray-100"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+            >
+              <option value="General">General</option>
+              <option value="RRHH">Recursos Humanos (RRHH)</option>
+              <option value="Ventas">Ventas</option>
+              <option value="Soporte">Soporte Técnico</option>
+              <option value="Finanzas">Finanzas</option>
+              <option value="Legal">Legal</option>
+            </select>
+          </div>
+
           <button
             className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-primary-700 disabled:opacity-60"
             onClick={handleIngest}
@@ -346,6 +499,14 @@ const RagIngestPage = () => {
               {JSON.stringify(result, null, 2)}
             </pre>
           )}
+
+          {/* Document Management Section */}
+          <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+              Documentos Ingestados
+            </h3>
+            <DocumentList />
+          </div>
         </div>
 
         {/* Footer for brand consistency */}

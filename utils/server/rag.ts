@@ -7,6 +7,7 @@ export type RagDocument = {
   metadata?: {
     source?: string;
     title?: string;
+    category?: string; // Department
   };
 };
 
@@ -18,6 +19,7 @@ type RagMatch = {
     source?: string;
     title?: string;
     chunk_index?: number;
+    category?: string;
   };
 };
 
@@ -98,6 +100,7 @@ const ensureCollection = async (vectorSize: number) => {
         size: vectorSize,
         distance: 'Cosine',
       },
+      on_disk_payload: true // Optimization for filtering
     }),
   });
 };
@@ -128,6 +131,49 @@ const upsertPoints = async (points: any[]) => {
   }
 };
 
+
+export const deleteDocumentsBySource = async (source: string) => {
+  if (!RAG_ENABLED) return;
+  const collectionUrl = `${RAG_QDRANT_URL}/collections/${RAG_COLLECTION}/points/delete`;
+  await fetchJson(collectionUrl, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
+      filter: {
+        must: [
+          {
+            key: 'source',
+            match: {
+              value: source,
+            },
+          },
+        ],
+      },
+    }),
+  });
+};
+
+export const deleteDocumentsByCategory = async (category: string) => {
+  if (!RAG_ENABLED) return;
+  const collectionUrl = `${RAG_QDRANT_URL}/collections/${RAG_COLLECTION}/points/delete`;
+  await fetchJson(collectionUrl, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
+      filter: {
+        must: [
+          {
+            key: 'category',
+            match: {
+              value: category,
+            },
+          },
+        ],
+      },
+    }),
+  });
+};
+
 export const ingestDocuments = async (documents: RagDocument[]) => {
   if (!RAG_ENABLED) {
     throw new Error('RAG is disabled. Set RAG_ENABLED=true.');
@@ -153,6 +199,7 @@ export const ingestDocuments = async (documents: RagDocument[]) => {
           chunk_index: chunk.index,
           source: doc.metadata?.source,
           title: doc.metadata?.title,
+          category: doc.metadata?.category, // Department
         },
       });
       totalChunks += 1;
@@ -166,14 +213,28 @@ export const ingestDocuments = async (documents: RagDocument[]) => {
   return { documents: documents.length, chunks: totalChunks };
 };
 
-const searchSimilar = async (query: string) => {
+const searchSimilar = async (query: string, department?: string) => {
   if (!RAG_ENABLED) return [] as RagMatch[];
   const embedding = await embedText(query);
+
+  const filter = department && department !== 'all' ? {
+    must: [
+      {
+        key: 'category',
+        match: {
+          value: department,
+        },
+      },
+    ],
+  } : undefined;
+
   const body: Record<string, any> = {
     vector: embedding,
     limit: RAG_TOP_K,
     with_payload: true,
+    filter,
   };
+
   if (!Number.isNaN(RAG_SCORE_THRESHOLD)) {
     body.score_threshold = RAG_SCORE_THRESHOLD;
   }
@@ -198,7 +259,8 @@ const buildContext = (matches: RagMatch[]) => {
     if (!text) continue;
     const label =
       payload.title || payload.source || payload.doc_id || 'document';
-    const entry = `[${label}#${payload.chunk_index ?? 0}] ${text}`;
+    const deptInfo = payload.category ? ` [${payload.category}]` : '';
+    const entry = `[${label}${deptInfo}#${payload.chunk_index ?? 0}] ${text}`;
     if (totalChars + entry.length > RAG_MAX_CONTEXT_CHARS) break;
     lines.push(entry);
     totalChars += entry.length + 1;
@@ -206,13 +268,13 @@ const buildContext = (matches: RagMatch[]) => {
   return lines.join('\n\n');
 };
 
-export const queryRagMatches = async (query: string) => {
+export const queryRagMatches = async (query: string, department?: string) => {
   if (!RAG_ENABLED) {
     throw new Error('RAG is disabled. Set RAG_ENABLED=true.');
   }
   const trimmed = (query || '').trim();
   if (!trimmed) return [];
-  const matches = await searchSimilar(trimmed);
+  const matches = await searchSimilar(trimmed, department);
   return matches.map((match) => ({
     score: match.score,
     text: match.payload?.text || '',
@@ -220,18 +282,29 @@ export const queryRagMatches = async (query: string) => {
     source: match.payload?.source,
     title: match.payload?.title,
     chunk_index: match.payload?.chunk_index,
+    category: match.payload?.category,
   }));
 };
 
-export const getRagContext = async (query?: string) => {
-  if (!RAG_ENABLED) return '';
+export const getRagContext = async (query?: string, department?: string) => {
+  if (!RAG_ENABLED) return { context: '', matches: [] };
   const trimmed = (query || '').trim();
-  if (!trimmed) return '';
+  if (!trimmed) return { context: '', matches: [] };
   try {
-    const matches = await searchSimilar(trimmed);
-    return buildContext(matches);
+    const matches = await searchSimilar(trimmed, department);
+    const context = buildContext(matches);
+    return {
+      context,
+      matches: matches.map(m => ({
+        score: m.score,
+        text: m.payload?.text,
+        source: m.payload?.source,
+        title: m.payload?.title,
+        category: m.payload?.category
+      }))
+    };
   } catch (error) {
     console.error('RAG lookup failed:', error);
-    return '';
+    return { context: '', matches: [] };
   }
 };

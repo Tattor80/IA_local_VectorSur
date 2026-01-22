@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import pdfParse from 'pdf-parse';
 import * as xlsx from 'xlsx';
 
-import { ingestDocuments, RagDocument, resetRagCollection } from '@/utils/server/rag';
+import { ingestDocuments, RagDocument, resetRagCollection, deleteDocumentsBySource } from '@/utils/server/rag';
 
 export const config = {
   runtime: 'nodejs',
@@ -64,7 +64,7 @@ const collectFiles = async (root: string, extensions: string[]) => {
   return files;
 };
 
-const toRagDocument = async (filePath: string): Promise<RagDocument | null> => {
+const toRagDocument = async (filePath: string, department?: string): Promise<RagDocument | null> => {
   const stat = await fs.stat(filePath);
   if (stat.size > MAX_FILE_MB * 1024 * 1024) return null;
   const ext = path.extname(filePath).toLowerCase();
@@ -84,6 +84,7 @@ const toRagDocument = async (filePath: string): Promise<RagDocument | null> => {
     metadata: {
       source: filePath,
       title: path.basename(filePath),
+      category: department, // Added department
     },
   };
 };
@@ -98,6 +99,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const folderPath = body?.folderPath || DEFAULT_FOLDER;
     const reset = Boolean(body?.reset);
+    // New optional field
+    const department = body?.department && typeof body.department === 'string' ? body.department : undefined;
     const extensions =
       Array.isArray(body?.extensions) && body.extensions.length
         ? body.extensions.map((ext: string) => ext.toLowerCase())
@@ -117,7 +120,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     let skipped = 0;
 
     for (const file of files) {
-      const doc = await toRagDocument(file);
+      if (!reset) {
+        try {
+          // file is the absolute path here, which is used as source
+          await deleteDocumentsBySource(file);
+        } catch (e) {
+          console.warn('Failed to delete existing documents for source:', file, e);
+        }
+      }
+
+      const doc = await toRagDocument(file, department);
       if (doc) {
         documents.push(doc);
       } else {
@@ -140,6 +152,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       ...result,
       files: files.length,
       skipped,
+      department, // debug
     });
   } catch (error) {
     console.error('RAG ingest folder error:', error);

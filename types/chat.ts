@@ -27,8 +27,9 @@ export interface ChatBody {
   messages?: Message[];
   images?: string[];
   ragQuery?: string;
-  options?: 
-    { temperature: number }
+  department?: string;
+  options?:
+  { temperature: number }
 }
 
 export interface Conversation {

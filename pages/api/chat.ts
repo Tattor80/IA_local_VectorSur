@@ -77,7 +77,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { model, system, options, prompt, images, ragQuery, messages } =
+    const { model, system, options, prompt, images, ragQuery, messages, department } =
       (body || {}) as ChatBody;
 
 
@@ -104,7 +104,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 
-    const ragContext = await getRagContext(ragQuery || prompt || '');
+    const { context: ragContextString, matches: ragMatches } = await getRagContext(
+      ragQuery || prompt || '',
+      department,
+    );
 
     const appendAttachmentToContent = (message: Message) => {
       const base = (message.content || '').trim();
@@ -148,7 +151,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     // Combine RAG Context and System Prompt
     // Place System Prompt AFTER context to ensure it has higher priority (Recency Bias)
-    const contextInstruction = ragContext ? `Context:\n${ragContext}` : '';
+    const contextInstruction = ragContextString ? `Context:\n${ragContextString}` : '';
     const systemInstruction = baseSystem;
 
     const finalSystemContent = [contextInstruction, systemInstruction]
@@ -207,6 +210,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.status(200);
     await streamToResponse(stream, res);
+
+    if (ragMatches && ragMatches.length > 0) {
+      // Append sources payload
+      const sourcesPayload = JSON.stringify(ragMatches);
+      res.write(`\n\n:::rag-sources:::${sourcesPayload}`);
+    }
   } catch (error) {
     console.error('Chat API error:', error);
     if (error instanceof OllamaError) {
