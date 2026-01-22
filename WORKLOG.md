@@ -313,6 +313,28 @@ Fecha: 2026-01-02
 - [ ] Exportación a Word (.docx)
 - [ ] Modo offline completo con Service Worker
 
+### 5. 🚀 Integración MCP + Google Workspace (Agent Mode)
+**Objetivo**: Convertir Vector Sur AI en un agente que ejecute acciones.
+
+#### Fase 1: Infraestructura
+- [ ] Implementar MCP Client en el backend
+- [ ] Sistema OAuth para Google (credenciales seguras)
+- [ ] UI de confirmación de acciones sensibles
+
+#### Fase 2: Google Workspace Tools
+- [ ] **Gmail MCP**: Leer bandeja, buscar emails, enviar correos
+- [ ] **Google Drive MCP**: Listar archivos, buscar documentos, descargar
+- [ ] **Google Calendar MCP**: Ver agenda, crear eventos, recordatorios
+
+#### Fase 3: Tool Calling en Chat
+- [ ] Detectar intención del usuario para ejecutar acciones
+- [ ] Mostrar preview de acción antes de ejecutar
+- [ ] Feedback visual del resultado (✅ Email enviado, 📅 Evento creado)
+
+**Recursos MCP**:
+- Documentación: https://modelcontextprotocol.io
+- Servers oficiales: `@anthropic/mcp-server-*`
+
 ---
 
 ## 📝 Notas Técnicas
