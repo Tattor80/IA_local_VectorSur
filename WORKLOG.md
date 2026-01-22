@@ -158,3 +158,98 @@ Fecha: 2026-01-02
 - Branding consistente
 - UX profesional con feedback visual
 - RAG funcional con documentos reales
+
+## Avances 2026-01-21 (RAG Fixes & Multi-Dept)
+
+### 🐛 Fix: Actualización de RAG (Ingestión)
+- **Problema:** Al re-ingestar un archivo con el mismo nombre, se duplicaban los vectores en Qdrant, generando respuestas repetidas o mezcladas.
+- **Solución:** Implementada función `deleteDocumentsBySource` en `utils/server/rag.ts`.
+- **Resultado:** Ahora, antes de ingestar un archivo, el sistema borra automáticamente cualquier vector previo asociado a ese path/nombre. La información siempre está fresca y sin duplicados.
+
+### 🏠 UI Improvement: Botón Home
+- Agregado botón de "Volver al Inicio" (flecha izquierda) en la cabecera de la página `/rag`. Facilita la navegación sin usar el botón atrás del navegador.
+
+### 🏢 Feature: Soporte Multi-Departamento
+- **Arquitectura**: Filtrado por Metadatos (Metadata Filtering) en una única colección.
+- **Backend**:
+    - `RagDocument` ahora incluye campo `category` (metadata).
+    - `ingestDocuments` guarda este campo en Qdrant payload.
+    - `searchSimilar` y `queryRagMatches` aceptan un filtro `department` opcional.
+- **Frontend (Ingesta)**:
+    - Nuevo selector "Department / Category" en `/rag`. Permite etiquetar documentos como *General, RRHH, Ventas, Soporte, Finanzas* o *Legal*.
+- **Frontend (Chat)**:
+    - Nuevo selector "Dept" en la cabecera del chat (`Chat.tsx`).
+    - Permite filtrar las búsquedas RAG para que solo responda con documentos del departamento seleccionado.
+
+### 🚀 Próximos Pasos Prochaine
+- **Auto-etiquetado por carpeta**: Implementar lógica para que si se selecciona una carpeta (ej: `docs/RRHH`), el sistema asigne automáticamente la etiqueta `RRHH` a los archivos contenidos, sin necesidad de selección manual.
+
+## Avances 2026-01-22
+- **Feature: Auto-etiquetado por carpeta**:
+  - Implementada lógica en frontend (`pages/rag.tsx`) para detectar automáticamente el departamento según el nombre de la carpeta seleccionada o escrita manualmente.
+  - Palabras clave soportadas:
+    - **RRHH**: "rrhh", "recursos humanos", "hr"
+    - **Ventas**: "ventas", "sales", "comercial"
+    - **Soporte**: "soporte", "support", "helpdesk", "tecnico"
+    - **Finanzas**: "finanzas", "finance", "contabilidad", "facturacion"
+    - **Legal**: "legal", "juridico", "contratos"
+  - Funciona tanto con el botón "Examinar carpeta" como al escribir la ruta manualmente (onBlur).
+
+- **Feature: Gestión de Colecciones Avanzada**:
+  - Habilitado borrado selectivo de documentos.
+  - Nuevo endpoint `/api/rag/delete`.
+  - UI en `/rag` ahora lista los documentos ingestados agrupados por categoría.
+  - Botones para eliminar archivo individual 🗑️ o categoría completa.
+  - Actualizado endpoint `/api/rag/status` para soportar listado de documentos (`?details=true`).
+
+- **Mejoras UI Chat y Personas**:
+  - **Limpieza de Header**: Simplificado el encabezado del chat, eliminado selector de temperatura duplicado, y mejorado el estilo del selector de departamentos.
+  - **Selector de Personas**: Implementado selector de roles predefinidos (Legal, Soporte, Ventas, etc.) en `SystemPrompt.tsx` para cambiar rápidamente el comportamiento del asistente.
+  - **Correcciones Técnicas**: Solucionados errores de linting en `Chat.tsx` (tipos implícitos y retornos de `t`).
+
+- **Feature: Citas RAG Interactivas (Source Highlighting)**:
+  - **Backend**: Modificado `utils/server/rag.ts` y `pages/api/chat.ts` para enviar metadatos de las fuentes (título, texto, dept) al final del stream de respuesta.
+  - **Frontend**: Nuevo componente `SourceBubble.tsx` que parsea la respuesta y muestra "badges" de fuentes al final del mensaje.
+  - **Interactividad**: Los badges son desplegables (acordeón) y muestran el fragmento exacto de texto utilizado por la IA, junto con su departamento y porcentaje de relevancia (score).
+
+- **Mejora UI Avanzada**:
+  - **Limpieza Extrema del Header**: Eliminados indicadores técnicos (temp) de la barra principal.
+  - **Menú Configuración Unificado**: Integrados controles de `SystemPrompt` (con selector de Personas) y `Temperatura` dentro del menú desplegable de "Ajustes" (⚙️), manteniéndolos accesibles pero ocultos por defecto.
+
+- **Optimización de Cerebro RAG**:
+  - **Super Prompt Activado**: Se ha definido un `DEFAULT_SYSTEM_PROMPT` robusto en `utils/app/const.ts`.
+  - **Instrucciones Clave**: Manda a la IA a basarse exclusivamente en el contexto, evitar alucinaciones, ser directa y mantener tono corporativo. Esto soluciona problemas de "falta de entendimiento" de documentos.
+
+- **Rediseño UX/UI Premium**:
+  - **Tipografía**: Implementada fuente `Inter` (Google Fonts) para una lectura profesional.
+  - **Glassmorphism**: Aplicado efecto de cristal/desenfoque en Sidebar y Header.
+  - **Paleta de Colores**: Reemplazado azul plano por gradientes neutros (Gris oscuro/negro en modo oscuro, Blanco/Gris perla en modo claro) para un look "Enterprise SaaS".
+  - **Contraste**: Corregidos problemas de texto blanco sobre blanco en modo claro.
+
+- **Dashboard de Valor (Enterprise Feature)**:
+  - **Servicio de Analíticas**: Nuevo `utils/app/analyticsService.ts` para tracking de consultas, documentos citados y tiempo de respuesta.
+  - **Integración en Chat**: Cada respuesta exitosa registra automáticamente métricas (departamento, fuentes RAG, tiempo).
+  - **Página `/analytics`**: Dashboard premium con:
+    - Tarjetas KPI animadas (Total Consultas, Tiempo Respuesta, Docs Referenciados, Ahorro Estimado).
+    - Gráfico de barras "Consultas por Departamento".
+    - Top 5 Documentos Más Citados.
+    - Calculadora de ROI (horas ahorradas, valor generado €30/h).
+  - **Navegación Integrada**: Botón "📊 Dashboard" añadido al menú lateral.
+
+- **Persistencia SQLite (Enterprise Feature)**:
+  - **Dependencias**: Instalado `better-sqlite3` para acceso SQLite nativo desde Node.js.
+  - **Servicio de BD**: Nuevo `utils/server/database.ts` con esquema (conversations, folders, prompts) y funciones CRUD.
+  - **API Endpoints**: Creados `/api/db/conversations`, `/api/db/folders`, `/api/db/prompts` para persistencia.
+  - **Frontend Híbrido**: Modificados `home.tsx`, `conversation.ts`, `folders.ts`, `prompts.ts` para guardar simultáneamente en localStorage (rápido) y SQLite (persistente).
+  - **Migración Automática**: Al cargar, si SQLite está vacío pero localStorage tiene datos, se migran automáticamente.
+  - **Base de Datos**: Archivo `vectorsur.db` se crea automáticamente en la raíz del proyecto.
+
+- **Exportación PDF Profesional (Enterprise Feature)**:
+  - **Dependencias**: Instalado `pdfkit` para generación de PDF.
+  - **Endpoint**: `/api/export/pdf` genera PDF con:
+    - Header con marca "Vector Sur AI" sobre fondo oscuro premium.
+    - Metadatos (fecha, modelo, departamento).
+    - Mensajes formateados con bordes de color por rol (azul=usuario, gris=asistente).
+    - Footer con paginación y aviso de confidencialidad.
+  - **UI**: Botón 📄 "Exportar PDF" añadido al header del Chat.
+  - **UX**: Toast de carga, descarga automática, manejo de errores.

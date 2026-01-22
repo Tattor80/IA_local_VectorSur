@@ -24,6 +24,8 @@ interface Props {
   onChangePrompt: (prompt: string) => void;
 }
 
+import { PERSONAS } from '@/utils/app/personas';
+
 export const SystemPrompt: FC<Props> = ({
   conversation,
   prompts,
@@ -37,6 +39,7 @@ export const SystemPrompt: FC<Props> = ({
   const [promptInputValue, setPromptInputValue] = useState('');
   const [variables, setVariables] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<string>('default');
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptListRef = useRef<HTMLUListElement | null>(null);
@@ -45,11 +48,25 @@ export const SystemPrompt: FC<Props> = ({
     prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
   );
 
+  const handlePersonaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const personaId = e.target.value;
+    setSelectedPersona(personaId);
+    if (personaId === 'custom') return;
+
+    const persona = PERSONAS.find(p => p.id === personaId);
+    if (persona) {
+      const content = persona.prompt;
+      setValue(content);
+      onChangePrompt(content);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
 
     setValue(value);
     updatePromptListVisibility(value);
+    setSelectedPersona('custom'); // Switch to custom if user edits manually
 
     if (value.length > 0) {
       onChangePrompt(value);
@@ -61,12 +78,9 @@ export const SystemPrompt: FC<Props> = ({
     if (!selectedPrompt) return;
 
     setValue((prevVal) => {
-      // If triggered via slash command, replace the slash command
       if (prevVal.match(/\/\w*$/)) {
         return prevVal?.replace(/\/\w*$/, selectedPrompt.content);
       }
-      // If triggered via button, just replace everything or append? 
-      // Let's replace for now as system prompt is usually singular, or maybe ask?
       return selectedPrompt.content;
     });
     handlePromptSelect(selectedPrompt);
@@ -104,8 +118,6 @@ export const SystemPrompt: FC<Props> = ({
     if (parsedVariables.length > 0) {
       setIsModalVisible(true);
     } else {
-      // If triggered via slash, we replaced in handleInitModal or here.
-      // But we need to handle the button click case where 'value' might not have the slash
       const content = prompt.content;
       setValue(content);
       onChangePrompt(content);
@@ -114,7 +126,6 @@ export const SystemPrompt: FC<Props> = ({
   };
 
   const handleLibraryClick = () => {
-    // Show all prompts
     setPromptInputValue('');
     setShowPromptList(!showPromptList);
   };
@@ -172,8 +183,16 @@ export const SystemPrompt: FC<Props> = ({
   useEffect(() => {
     if (conversation.prompt) {
       setValue(conversation.prompt);
+      // Try to match existing prompt to a persona
+      const match = PERSONAS.find(p => p.prompt === conversation.prompt);
+      if (match) {
+        setSelectedPersona(match.id);
+      } else {
+        setSelectedPersona('custom');
+      }
     } else {
       setValue(DEFAULT_SYSTEM_PROMPT);
+      setSelectedPersona('default');
     }
   }, [conversation]);
 
@@ -182,7 +201,6 @@ export const SystemPrompt: FC<Props> = ({
       if (
         promptListRef.current &&
         !promptListRef.current.contains(e.target as Node) &&
-        // Don't close if clicking the library button (which might be outside the list)
         !(e.target as HTMLElement).closest('.prompt-library-button')
       ) {
         setShowPromptList(false);
@@ -199,16 +217,28 @@ export const SystemPrompt: FC<Props> = ({
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center mb-2">
-        <label className="text-left text-neutral-700 dark:text-neutral-400">
+        <label className="text-left text-neutral-700 dark:text-neutral-400 font-medium">
           {t('System Prompt')}
         </label>
-        <button
-          className="prompt-library-button text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
-          onClick={handleLibraryClick}
-          title={t('Select from library') || 'Select from library'}
-        >
-          <IconBook size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            className="appearance-none rounded-md bg-gray-100 dark:bg-gray-800 py-1 pl-2 pr-8 text-xs font-medium text-gray-700 dark:text-gray-300 focus:outline-none border border-transparent hover:border-gray-300 dark:hover:border-gray-600 cursor-pointer"
+            value={selectedPersona}
+            onChange={handlePersonaChange}
+          >
+            <option value="custom">Custom</option>
+            {PERSONAS.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <button
+            className="prompt-library-button text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 transition-colors"
+            onClick={handleLibraryClick}
+            title={t('Select from library') || 'Select from library'}
+          >
+            <IconBook size={18} />
+          </button>
+        </div>
       </div>
 
       <textarea
@@ -219,8 +249,8 @@ export const SystemPrompt: FC<Props> = ({
           bottom: `${textareaRef?.current?.scrollHeight}px`,
           maxHeight: '300px',
           overflow: `${textareaRef.current && textareaRef.current.scrollHeight > 400
-              ? 'auto'
-              : 'hidden'
+            ? 'auto'
+            : 'hidden'
             }`,
         }}
         placeholder={

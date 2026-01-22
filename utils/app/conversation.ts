@@ -10,12 +10,16 @@ const sanitizeConversation = (conversation: Conversation): Conversation => {
       }
 
       const { contentText, ...restMetadata } = metadata;
+      // Explicitly reconstruct file with required properties to satisfy TypeScript
+      const sanitizedFile = {
+        name: message.file!.name,
+        size: message.file!.size,
+        type: message.file!.type,
+        metadata: restMetadata,
+      };
       return {
         ...message,
-        file: {
-          ...message.file,
-          metadata: restMetadata,
-        },
+        file: sanitizedFile,
       };
     }),
   };
@@ -43,15 +47,39 @@ export const updateConversation = (
 };
 
 export const saveConversation = (conversation: Conversation) => {
+  const sanitized = sanitizeConversation(conversation);
+
+  // Save to localStorage (for quick access and offline fallback)
   localStorage.setItem(
     'selectedConversation',
-    JSON.stringify(sanitizeConversation(conversation)),
+    JSON.stringify(sanitized),
   );
+
+  // Save to SQLite API (for persistence)
+  fetch('/api/db/conversations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(sanitized),
+  }).catch((err) => {
+    console.warn('Failed to save conversation to SQLite:', err);
+  });
 };
 
 export const saveConversations = (conversations: Conversation[]) => {
+  const sanitized = conversations.map(sanitizeConversation);
+
+  // Save to localStorage (for quick access and offline fallback)
   localStorage.setItem(
     'conversationHistory',
-    JSON.stringify(conversations.map(sanitizeConversation)),
+    JSON.stringify(sanitized),
   );
+
+  // Save to SQLite API (for persistence)
+  fetch('/api/db/conversations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(sanitized),
+  }).catch((err) => {
+    console.warn('Failed to save conversations to SQLite:', err);
+  });
 };

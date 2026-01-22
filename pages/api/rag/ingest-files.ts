@@ -8,6 +8,7 @@ import {
   ingestDocuments,
   RagDocument,
   resetRagCollection,
+  deleteDocumentsBySource,
 } from '@/utils/server/rag';
 
 export const config = {
@@ -110,6 +111,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         skipped += 1;
         continue;
       }
+
+      if (!reset) {
+        try {
+          const source = file.relativePath || file.name;
+          await deleteDocumentsBySource(source);
+        } catch (e) {
+          console.warn('Failed to delete existing documents for source:', file.name, e);
+        }
+      }
+
       const doc = await toRagDocument(file);
       if (doc) {
         documents.push(doc);

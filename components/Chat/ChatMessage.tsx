@@ -22,11 +22,10 @@ import HomeContext from '@/pages/api/home/home.context';
 import { CodeBlock } from '../Markdown/CodeBlock';
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
 
-// Import safely to avoid build issues
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-// Replace direct import with a dynamic approach for rehype-mathjax
-// import rehypeMathjax from 'rehype-mathjax';
+
+import { SourceBubble } from './SourceBubble';
 
 export interface Props {
   message: Message;
@@ -60,6 +59,16 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
         : fileNameLower.endsWith('.txt') || message.file?.type?.startsWith('text/')
           ? 'text'
           : 'other');
+
+  // Parse Source Data
+  const [displayContent, sourceDataRaw] = message.content.split(':::rag-sources:::');
+  const sources = sourceDataRaw ? (() => {
+    try {
+      return JSON.parse(sourceDataRaw);
+    } catch {
+      return [];
+    }
+  })() : [];
 
   const toggleEditing = () => {
     setIsEditing(!isEditing);
@@ -144,11 +153,10 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
 
   return (
     <div
-      className={`group md:px-4 message-bubble ${
-        message.role === 'assistant'
-          ? 'bg-gradient-to-br from-message-assistant-light to-gray-50 dark:from-message-assistant-dark dark:to-gray-800/50 backdrop-blur-sm'
-          : 'bg-gradient-to-br from-message-user-light to-white dark:from-message-user-dark dark:to-gray-800/50 backdrop-blur-sm'
-      }`}
+      className={`group md:px-4 message-bubble ${message.role === 'assistant'
+        ? 'bg-gradient-to-br from-message-assistant-light to-gray-50 dark:from-message-assistant-dark dark:to-gray-800/50 backdrop-blur-sm'
+        : 'bg-gradient-to-br from-message-user-light to-white dark:from-message-user-dark dark:to-gray-800/50 backdrop-blur-sm'
+        }`}
       style={{ overflowWrap: 'anywhere' }}
     >
       <div className="relative m-auto flex p-3 text-base md:max-w-2xl md:gap-4 md:py-4 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
@@ -234,8 +242,9 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
                     </div>
                   )}
                   <div className="prose whitespace-pre-wrap dark:prose-invert">
-                    {message.content}
+                    {displayContent}
                   </div>
+                  <SourceBubble sources={sources} />
                 </div>
               )}
 
@@ -244,21 +253,21 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
                   <button
                     className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110 group/tooltip"
                     onClick={toggleEditing}
-                    title={t('Edit message')}
+                    title={(t('Edit message') as string) || 'Edit message'}
                   >
                     <IconEdit size={18} stroke={1.5} className="group-hover/tooltip:rotate-12 transition-transform duration-200" />
                   </button>
                   <button
                     className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110 group/tooltip"
                     onClick={copyOnClick}
-                    title={t('Copy message')}
+                    title={(t('Copy message') as string) || 'Copy message'}
                   >
                     <IconCopy size={18} stroke={1.5} className="group-hover/tooltip:scale-125 transition-transform duration-200" />
                   </button>
                   <button
                     className="invisible group-hover:visible focus:visible text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 hover:scale-110 group/tooltip"
                     onClick={handleDeleteMessage}
-                    title={t('Delete message')}
+                    title={(t('Delete message') as string) || 'Delete message'}
                   >
                     <IconTrash size={18} stroke={1.5} className="group-hover/tooltip:rotate-12 transition-transform duration-200" />
                   </button>
@@ -266,80 +275,65 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
               )}
             </div>
           ) : (
-            <div className="flex flex-row">
-              <MemoizedReactMarkdown
-                className="prose dark:prose-invert flex-1"
-                remarkPlugins={[remarkGfm, remarkMath]}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const childrenArray = Array.isArray(children) ? children : [children];
-                    if (childrenArray.length) {
-                      if (childrenArray[0] === '▍') {
-                        return <span className="animate-pulse cursor-default mt-1">▍</span>
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="flex flex-row">
+                <MemoizedReactMarkdown
+                  className="prose dark:prose-invert flex-1"
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  components={{
+                    code({ node, inline, className, children, ...props }: any) {
+                      const childrenArray = Array.isArray(children) ? children : [children];
+                      if (childrenArray.length) {
+                        if (childrenArray[0] === '▍') {
+                          return <span className="animate-pulse cursor-default mt-1">▍</span>
+                        }
+
+                        if (typeof childrenArray[0] === 'string') {
+                          childrenArray[0] = childrenArray[0].replace("`▍`", "▍");
+                        }
                       }
 
-                      if (typeof childrenArray[0] === 'string') {
-                        childrenArray[0] = childrenArray[0].replace("`▍`", "▍");
-                      }
-                    }
+                      const match = /language-(\w+)/.exec(className || '');
 
-                    const match = /language-(\w+)/.exec(className || '');
-
-                    return !inline ? (
-                      <CodeBlock
-                        language={(match && match[1]) || ''}
-                        value={String(children).replace(/\n$/, '')}
-                        {...props}
-                      />
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  },
-                  table({ children }) {
-                    return (
-                      <table className="border-collapse border border-black px-3 py-1 dark:border-white">
-                        {children}
-                      </table>
-                    );
-                  },
-                  th({ children }) {
-                    return (
-                      <th className="break-words border border-black bg-gray-500 px-3 py-1 text-white dark:border-white">
-                        {children}
-                      </th>
-                    );
-                  },
-                  td({ children }) {
-                    return (
-                      <td className="break-words border border-black px-3 py-1 dark:border-white">
-                        {children}
-                      </td>
-                    );
-                  },
-                }}
-              >
-                {`${message.content}${
-                  messageIsStreaming && messageIndex == (selectedConversation?.messages.length ?? 0) - 1 ? '`▍`' : ''
-                }`}
-              </MemoizedReactMarkdown>
-
-              <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-2 md:gap-1 items-center md:items-start justify-end md:justify-start">
-                {messagedCopied ? (
-                  <div className="p-2 rounded-xl bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 animate-scale-in">
-                    <IconCheck size={18} stroke={1.5} />
-                  </div>
-                ) : (
-                  <button
-                    className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110 group/tooltip"
-                    onClick={copyOnClick}
-                    title={t('Copy message')}
-                  >
-                    <IconCopy size={18} stroke={1.5} className="group-hover/tooltip:scale-125 transition-transform duration-200" />
-                  </button>
-                )}
+                      return !inline ? (
+                        <CodeBlock
+                          language={(match && match[1]) || ''}
+                          value={String(children).replace(/\n$/, '')}
+                          {...props}
+                        />
+                      ) : (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      );
+                    },
+                    table({ children }) {
+                      return (
+                        <table className="border-collapse border border-black px-3 py-1 dark:border-white">
+                          {children}
+                        </table>
+                      );
+                    },
+                    th({ children }) {
+                      return (
+                        <th className="break-words border border-black bg-gray-500 px-3 py-1 text-white dark:border-white">
+                          {children}
+                        </th>
+                      );
+                    },
+                    td({ children }) {
+                      return (
+                        <td className="break-words border border-black px-3 py-1 dark:border-white">
+                          {children}
+                        </td>
+                      );
+                    },
+                  }}
+                >
+                  {displayContent}
+                </MemoizedReactMarkdown>
               </div>
+              <SourceBubble sources={sources} />
             </div>
           )}
         </div>
@@ -347,4 +341,4 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
     </div>
   );
 });
-ChatMessage.displayName = 'ChatMessage';
+

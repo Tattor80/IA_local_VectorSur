@@ -242,54 +242,155 @@ const Home = ({ defaultModelId }: Props) => {
       dispatch({ field: 'showPromptbar', value: showPromptbar === 'true' });
     }
 
-    const folders = localStorage.getItem('folders');
-    if (folders) {
-      dispatch({ field: 'folders', value: JSON.parse(folders) });
-    }
+    // Load data from SQLite API with localStorage fallback
+    const loadData = async () => {
+      try {
+        // Load folders from API
+        const foldersRes = await fetch('/api/db/folders');
+        if (foldersRes.ok) {
+          const foldersData = await foldersRes.json();
+          if (foldersData.length > 0) {
+            dispatch({ field: 'folders', value: foldersData });
+          } else {
+            // Fallback to localStorage
+            const localFolders = localStorage.getItem('folders');
+            if (localFolders) {
+              const parsed = JSON.parse(localFolders);
+              dispatch({ field: 'folders', value: parsed });
+              // Migrate to API
+              await fetch('/api/db/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(parsed),
+              });
+            }
+          }
+        }
+      } catch {
+        // Fallback to localStorage
+        const folders = localStorage.getItem('folders');
+        if (folders) dispatch({ field: 'folders', value: JSON.parse(folders) });
+      }
 
-    const prompts = localStorage.getItem('prompts');
-    if (prompts) {
-      dispatch({ field: 'prompts', value: JSON.parse(prompts) });
-    }
+      try {
+        // Load prompts from API
+        const promptsRes = await fetch('/api/db/prompts');
+        if (promptsRes.ok) {
+          const promptsData = await promptsRes.json();
+          if (promptsData.length > 0) {
+            dispatch({ field: 'prompts', value: promptsData });
+          } else {
+            // Fallback to localStorage
+            const localPrompts = localStorage.getItem('prompts');
+            if (localPrompts) {
+              const parsed = JSON.parse(localPrompts);
+              dispatch({ field: 'prompts', value: parsed });
+              // Migrate to API
+              await fetch('/api/db/prompts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(parsed),
+              });
+            }
+          }
+        }
+      } catch {
+        // Fallback to localStorage
+        const prompts = localStorage.getItem('prompts');
+        if (prompts) dispatch({ field: 'prompts', value: JSON.parse(prompts) });
+      }
 
-    const conversationHistory = localStorage.getItem('conversationHistory');
-    if (conversationHistory) {
-      const parsedConversationHistory: Conversation[] =
-        JSON.parse(conversationHistory);
-      const cleanedConversationHistory = cleanConversationHistory(
-        parsedConversationHistory,
-      );
+      try {
+        // Load conversations from API
+        const convsRes = await fetch('/api/db/conversations');
+        if (convsRes.ok) {
+          const convsData = await convsRes.json();
+          if (convsData.length > 0) {
+            const cleanedConversations = cleanConversationHistory(convsData);
+            dispatch({ field: 'conversations', value: cleanedConversations });
 
-      dispatch({ field: 'conversations', value: cleanedConversationHistory });
-    }
+            // Set selected conversation
+            const lastConv = cleanedConversations[cleanedConversations.length - 1];
+            const localSelected = localStorage.getItem('selectedConversation');
+            if (localSelected) {
+              const parsed = JSON.parse(localSelected);
+              const found = cleanedConversations.find((c: Conversation) => c.id === parsed.id);
+              if (found) {
+                dispatch({ field: 'selectedConversation', value: cleanSelectedConversation(found) });
+              } else {
+                dispatch({ field: 'selectedConversation', value: cleanSelectedConversation(lastConv) });
+              }
+            } else {
+              dispatch({ field: 'selectedConversation', value: cleanSelectedConversation(lastConv) });
+            }
+          } else {
+            // Fallback to localStorage and migrate
+            const localConvs = localStorage.getItem('conversationHistory');
+            if (localConvs) {
+              const parsed = JSON.parse(localConvs);
+              const cleaned = cleanConversationHistory(parsed);
+              dispatch({ field: 'conversations', value: cleaned });
 
-    const selectedConversation = localStorage.getItem('selectedConversation');
-    if (selectedConversation) {
-      const parsedSelectedConversation: Conversation =
-        JSON.parse(selectedConversation);
-      const cleanedSelectedConversation = cleanSelectedConversation(
-        parsedSelectedConversation,
-      );
+              // Migrate to API
+              await fetch('/api/db/conversations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cleaned),
+              });
 
-      dispatch({
-        field: 'selectedConversation',
-        value: cleanedSelectedConversation,
-      });
-    } else {
-      const lastConversation = conversations[conversations.length - 1];
-      dispatch({
-        field: 'selectedConversation',
-        value: {
-          id: uuidv4(),
-          name: t('New Conversation'),
-          messages: [],
-          model: OllamaModels[defaultModelId],
-          prompt: DEFAULT_SYSTEM_PROMPT,
-          temperature: lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
-          folderId: null,
-        },
-      });
-    }
+              const localSelected = localStorage.getItem('selectedConversation');
+              if (localSelected) {
+                dispatch({ field: 'selectedConversation', value: cleanSelectedConversation(JSON.parse(localSelected)) });
+              } else if (cleaned.length > 0) {
+                dispatch({ field: 'selectedConversation', value: cleanSelectedConversation(cleaned[cleaned.length - 1]) });
+              }
+            } else {
+              // Create new conversation
+              dispatch({
+                field: 'selectedConversation',
+                value: {
+                  id: uuidv4(),
+                  name: t('New Conversation'),
+                  messages: [],
+                  model: OllamaModels[defaultModelId],
+                  prompt: DEFAULT_SYSTEM_PROMPT,
+                  temperature: DEFAULT_TEMPERATURE,
+                  folderId: null,
+                },
+              });
+            }
+          }
+        }
+      } catch {
+        // Fallback to localStorage
+        const conversationHistory = localStorage.getItem('conversationHistory');
+        if (conversationHistory) {
+          const parsed = JSON.parse(conversationHistory);
+          const cleaned = cleanConversationHistory(parsed);
+          dispatch({ field: 'conversations', value: cleaned });
+        }
+
+        const selectedConversation = localStorage.getItem('selectedConversation');
+        if (selectedConversation) {
+          dispatch({ field: 'selectedConversation', value: cleanSelectedConversation(JSON.parse(selectedConversation)) });
+        } else {
+          dispatch({
+            field: 'selectedConversation',
+            value: {
+              id: uuidv4(),
+              name: t('New Conversation'),
+              messages: [],
+              model: OllamaModels[defaultModelId],
+              prompt: DEFAULT_SYSTEM_PROMPT,
+              temperature: DEFAULT_TEMPERATURE,
+              folderId: null,
+            },
+          });
+        }
+      }
+    };
+
+    loadData();
   }, [defaultModelId, dispatch, t]);
 
   return (
@@ -315,7 +416,7 @@ const Home = ({ defaultModelId }: Props) => {
       </Head>
       {selectedConversation && (
         <main
-          className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${lightMode}`}
+          className={`flex h-screen w-screen flex-col text-sm text-gray-900 dark:text-gray-100 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-black ${lightMode}`}
         >
           <div className="fixed top-0 w-full sm:hidden">
             <Navbar

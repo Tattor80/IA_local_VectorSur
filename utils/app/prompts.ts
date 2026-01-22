@@ -18,5 +18,15 @@ export const updatePrompt = (updatedPrompt: Prompt, allPrompts: Prompt[]) => {
 };
 
 export const savePrompts = (prompts: Prompt[]) => {
+  // Save to localStorage (for quick access and offline fallback)
   localStorage.setItem('prompts', JSON.stringify(prompts));
+
+  // Save to SQLite API (for persistence)
+  fetch('/api/db/prompts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(prompts),
+  }).catch((err) => {
+    console.warn('Failed to save prompts to SQLite:', err);
+  });
 };
