@@ -253,3 +253,86 @@ Fecha: 2026-01-02
     - Footer con paginación y aviso de confidencialidad.
   - **UI**: Botón 📄 "Exportar PDF" añadido al header del Chat.
   - **UX**: Toast de carga, descarga automática, manejo de errores.
+
+---
+
+## 🚀 Release: Beta 2.0 (2026-01-22)
+
+**Commit**: `2767897 🚀 Beta 2.0 - Enterprise Release`
+**Tag**: `beta-2.0`
+**GitHub**: `https://github.com/Tattor80/IA_local_VectorSur`
+
+---
+
+## 📋 Resumen de Sesión (2026-01-22)
+
+### Logros del día:
+1. ✅ Corregidos errores de linting en `Chat.tsx`, `ChatMessage.tsx`, `conversation.ts`
+2. ✅ Implementadas **Citas RAG Interactivas** con badges clickeables
+3. ✅ Añadido **Selector de Departamento** funcional (fix de stale closure)
+4. ✅ Definido **Super Prompt RAG** por defecto para mejor comprensión de documentos
+5. ✅ Rediseño **UI Premium**: Glassmorphism, tipografía Inter, gradientes neutros
+6. ✅ Implementado **Dashboard de Valor** (`/analytics`) con KPIs y calculadora ROI
+7. ✅ Implementada **Persistencia SQLite** (`vectorsur.db`) con migración automática
+8. ✅ Implementada **Exportación PDF** profesional con membrete Vector Sur AI
+9. ✅ Subido a GitHub como **Beta 2.0**
+
+### Archivos clave creados/modificados:
+- `utils/app/analyticsService.ts` - Servicio de tracking
+- `utils/server/database.ts` - Servicio SQLite
+- `pages/analytics.tsx` - Dashboard de valor
+- `pages/api/db/conversations.ts` - API persistencia
+- `pages/api/export/pdf.ts` - Generación PDF
+- `components/Chat/SourceBubble.tsx` - Citas RAG interactivas
+
+---
+
+## 🔮 Próximos Pasos (Próxima Sesión)
+
+### 1. Sistema de Configuración Avanzada
+- [ ] Página `/settings` dedicada con todas las opciones
+- [ ] Configuración de costes para calculadora ROI (€/hora personalizable)
+- [ ] Temas de color personalizables
+- [ ] Configuración de departamentos dinámicos
+
+### 2. Sistema de Usuarios (Multi-tenant)
+- [ ] Modelo de usuario en SQLite (id, email, role, createdAt)
+- [ ] Autenticación básica (login/registro)
+- [ ] Asociar conversaciones a usuarios
+- [ ] Roles: Admin, Usuario, Solo-Lectura
+- [ ] Panel de administración de usuarios
+
+### 3. Auditoría y Compliance
+- [ ] Tabla de logs en SQLite (userId, action, timestamp, details)
+- [ ] API `/api/db/audit` para consultar logs
+- [ ] Vista de auditoría en Dashboard
+
+### 4. Mejoras Adicionales
+- [ ] Búsqueda global de conversaciones
+- [ ] Favoritos/Pins de conversaciones
+- [ ] Exportación a Word (.docx)
+- [ ] Modo offline completo con Service Worker
+
+---
+
+## 📝 Notas Técnicas
+
+### Dependencias añadidas hoy:
+```json
+"better-sqlite3": "^X.X.X",
+"@types/better-sqlite3": "^X.X.X",
+"pdfkit": "^X.X.X",
+"@types/pdfkit": "^X.X.X"
+```
+
+### Base de datos SQLite:
+- Archivo: `vectorsur.db` (raíz del proyecto)
+- Tablas: `conversations`, `folders`, `prompts`
+- Modo: WAL para mejor rendimiento
+
+### Arquitectura de persistencia:
+```
+Frontend → localStorage (rápido)
+        ↘
+          API Routes → SQLite (persistente)
+```
